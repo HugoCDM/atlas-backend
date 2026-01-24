@@ -183,3 +183,4 @@ async def get_supermarkets():
                 'error': 'table invalid or not found'
             }
         )
+    

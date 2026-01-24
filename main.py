@@ -3,6 +3,11 @@ from fastapi.middleware.cors import CORSMiddleware
 from routers.supabase_tables import router
 
 app = FastAPI()
+
+@app.get('/')
+async def health():
+    return {'status': 'ok'}
+
 app.include_router(router)
 app.add_middleware(
     CORSMiddleware,
