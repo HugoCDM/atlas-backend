@@ -1,0 +1,18 @@
+[project]
+name = "supabase-api"
+version = "0.1.0"
+description = ""
+authors = [
+    {name = "Hugo Mello",email = "hugo@gmail.com"}
+]
+readme = "README.md"
+requires-python = ">=3.14"
+dependencies = [
+    "fastapi[standard] (>=0.128.0,<0.129.0)",
+    "supabase (>=2.27.2,<3.0.0)"
+]
+
+
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"
