@@ -11,7 +11,7 @@ async def health():
 app.include_router(router)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=['http://localhost:5173', 'https://dynamic-trifle-a949c7.netlify.app/'],
+    allow_origins=['http://localhost:5173', 'https://stately-treacle-e466de.netlify.app/'],
     allow_credentials=True,
     allow_headers=['*'],
     allow_methods=['*'])
