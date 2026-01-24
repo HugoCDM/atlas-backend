@@ -1,5 +1,5 @@
 from fastapi import APIRouter, status, HTTPException
-from .. import supabase_client
+from supabase_client import supabase_client
 
 router = APIRouter(prefix='/api', tags=['api'])
 
