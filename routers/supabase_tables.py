@@ -198,7 +198,7 @@ async def get_all_data():
             'state_schools': fetch_table('escolas-estaduais', 'unidade, endereco, zona, telefone, latitude, longitude').data,
             'municipal_schools': fetch_table('escolas-municipais', 'nome, tipo, latitude, longitude').data,
             'squares': fetch_table('pracas', 'nomeCompleto, endereco, ap, latitude, longitude').data,
-            'hospitals': fetch_table('unidades-saude-municipais', 'NOME, ENDERECO, BAIRRO, TIPO_data, CNES, HORARIO_SEMANA, TELEFONE, latitude, longitude').data,
+            'hospitals': fetch_table('unidades-saude-municipais', 'NOME, ENDERECO, BAIRRO, TIPO_UNIDADE, CNES, HORARIO_SEMANA, TELEFONE, latitude, longitude').data,
             'equipments': fetch_table('gestao-equipamento-smas2023', 'nome_equip, endereco, bairro, bairros_at, hierarquia, telefone, latitude, longitude').data,
             'vlt': fetch_table('vlt-paradas', 'nome, latitude, longitude').data,
             'brt': fetch_table('estacoes-brt', 'nome, corredor, latitude, longitude').data,
