@@ -185,7 +185,7 @@ router = APIRouter(prefix='/api', tags=['api'])
 #         )
     
 
-@router.get('get-all-data')
+@router.get('/get-all-data')
 async def get_all_data():
     try:
         def fetch_table(table_name, columns):
