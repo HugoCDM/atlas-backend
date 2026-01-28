@@ -1,98 +1,19 @@
-name: Keep Render Alive (Advanced)
-
 on:
   schedule:
-    # Pingar a cada 14 minutos (Render dorme após 15 min de inatividade)
-    - cron: '*/14 * * * *'
+    # Rodar a cada 5 ou 10 minutos para compensar o atraso do GitHub
+    - cron: '*/5 * * * *'
   workflow_dispatch:
 
 jobs:
   ping-render:
     runs-on: ubuntu-latest
-    
     steps:
-      - name: 📌 Checkout
-        uses: actions/checkout@v4
-
-      - name: 🔄 Ping Render API
+      - name: 🔄 Ping Render
         run: |
-          RENDER_URL="https://atlas-backend-fn5s.onrender.com"
-          API_URL="https://atlas-backend-fn5s.onrender.com/api/health"
+          # O comando "|| true" no final impede que o GitHub marque como Erro se o ping falhar
+          curl -s -f https://atlas-backend-fn5s.onrender.com/api/health || echo "Servidor ainda acordando..."
           
-          echo "⏰ Timestamp: $(date -u +'%Y-%m-%d %H:%M:%S UTC')"
-          echo "📍 Pinging: $RENDER_URL"
-          echo ""
-          
-          # Tentar 3 vezes se falhar
-          for i in {1..3}; do
-            echo "🔄 Tentativa $i..."
-            
-            # Pingar a página principal
-            if curl -I --max-time 10 --connect-timeout 5 "$RENDER_URL" 2>/dev/null | head -n 1; then
-              echo "✅ Frontend respondeu!"
-              break
-            fi
-            
-            if [ $i -lt 3 ]; then
-              echo "⏳ Aguardando 5 segundos antes de tentar novamente..."
-              sleep 5
-            fi
-          done
-          
-          echo ""
-          echo "🔄 Pinging API..."
-          
-          # Pingar a API
-          for i in {1..3}; do
-            echo "🔄 Tentativa $i (API)..."
-            
-            if curl -I --max-time 10 --connect-timeout 5 "$API_URL" 2>/dev/null | head -n 1; then
-              echo "✅ API respondeu!"
-              break
-            fi
-            
-            if [ $i -lt 3 ]; then
-              sleep 5
-            fi
-          done
-          
-          echo ""
-          echo "✅ Keep-alive executado com sucesso!"
+          # Ping na URL principal também
+          curl -s -f https://atlas-backend-fn5s.onrender.com || echo "Frontend ainda acordando..."
 
-      - name: 📊 Status Check
-        if: always()
-        run: |
-          echo "📊 Job Status: ${{ job.status }}"
-          echo "⏱️ Próxima execução: em ~14 minutos"
-
-  # Job adicional para verificar múltiplas URLs
-  multi-ping:
-    runs-on: ubuntu-latest
-    
-    steps:
-      - name: 🔄 Ping Multiple Endpoints
-        run: |
-          # Array de URLs para pingar
-          declare -a urls=(
-            "https://atlas-backend-fn5s.onrender.com"
-            "https://atlas-backend-fn5s.onrender.com/api/get-all-data"
-          )
           
-          echo "🚀 Iniciando multi-ping em $(date -u +'%Y-%m-%d %H:%M:%S UTC')"
-          echo ""
-          
-          for url in "${urls[@]}"; do
-            echo "📍 Pinging: $url"
-            
-            response=$(curl -s -w "%{http_code}" --max-time 10 --connect-timeout 5 "$url" -o /dev/null)
-            
-            if [ "$response" == "200" ] || [ "$response" == "304" ]; then
-              echo "✅ Status: $response (OK)"
-            else
-              echo "⚠️ Status: $response (Possível erro, mas continuando...)"
-            fi
-            
-            echo ""
-          done
-          
-          echo "✅ Multi-ping concluído!"
