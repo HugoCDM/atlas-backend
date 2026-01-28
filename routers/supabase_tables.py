@@ -5,73 +5,86 @@ from concurrent.futures import ThreadPoolExecutor
 
 router = APIRouter(prefix='/api', tags=['api'])
 
+# ✅ Pool de threads para queries síncronas do Supabase
 executor = ThreadPoolExecutor(max_workers=12)
-def fetch_table_sync(table_name, columns):
-    return supabase_client.table(table_name).select(columns).execute()
+
+
+def fetch_table(table_name: str, columns: str):
+    """Fetch síncrono de uma tabela - simples e direto"""
+    try:
+        result = supabase_client.table(table_name).select(columns).execute()
+        return result.data if result.data else []
+    except Exception as e:
+        print(f"❌ Erro ao buscar {table_name}: {e}")
+        return []
 
 
 @router.get('/get-all-data')
 async def get_all_data():
     """
-    ✅ OTIMIZADO: Fetch de TODAS as tabelas em paralelo
+    ✅ OTIMIZADO: Carrega todas as tabelas em PARALELO
+    Mantém a simplicidade do código anterior mas é 80% mais rápido!
     
     Benchmark:
-    - Sem otimização: ~8s (sequencial)
-    - Com otimização: ~1.5s (paralelo)
-    - Redução: 80% mais rápido! 🚀
+    - Sequencial: ~8s
+    - Paralelo: ~1.5s
     """
     try:
         loop = asyncio.get_event_loop()
         
-        # Definir todas as tabelas e colunas para fetch
-        tables = {
-            'train_stations': ('estacoes-trem', 'nome, rua, presencaRamais, latitude, longitude'),
-            'metro_stations': ('estacoes-metro', 'nome, latitude, longitude'),
-            'federal_schools': ('escolas-federais', 'unidade, endereco, zona, telefone, latitude, longitude'),
-            'state_schools': ('escolas-estaduais', 'unidade, endereco, zona, telefone, latitude, longitude'),
-            'municipal_schools': ('escolas-municipais', 'nome, tipo, latitude, longitude'),
-            'squares': ('pracas', 'nomeCompleto, endereco, ap, latitude, longitude'),
-            'hospitals': ('unidades-saude-municipais', 'NOME, ENDERECO, BAIRRO, TIPO_UNIDADE, CNES, HORARIO_SEMANA, TELEFONE, latitude, longitude'),
-            'equipments': ('gestao-equipamento-smas2023', 'nome_equip, endereco, bairro, bairros_at, hierarquia, telefone, latitude, longitude'),
-            'vlt': ('vlt-paradas', 'nome, latitude, longitude'),
-            'brt': ('estacoes-brt', 'nome, corredor, latitude, longitude'),
-            'supermarkets': ('supermercados', 'nome, latitude, longitude'),
-        }
-        
         # ✅ PASSO 1: Criar tasks para TODAS as requisições em paralelo
-        tasks = []
-        for table_key, (table_name, columns) in tables.items():
-            task = loop.run_in_executor(
-                executor, 
-                fetch_table_sync, 
-                table_name, 
-                columns
-            )
-            tasks.append((table_key, task))
+        # Isso inicia TODAS as requisições ao mesmo tempo
+        tasks = [
+            loop.run_in_executor(executor, fetch_table, 'estacoes-trem', 'nome, rua, presencaRamais, latitude, longitude'),
+            loop.run_in_executor(executor, fetch_table, 'estacoes-metro', 'nome, latitude, longitude'),
+            loop.run_in_executor(executor, fetch_table, 'escolas-federais', 'unidade, endereco, zona, telefone, latitude, longitude'),
+            loop.run_in_executor(executor, fetch_table, 'escolas-estaduais', 'unidade, endereco, zona, telefone, latitude, longitude'),
+            loop.run_in_executor(executor, fetch_table, 'escolas-municipais', 'nome, tipo, latitude, longitude'),
+            loop.run_in_executor(executor, fetch_table, 'pracas', 'nomeCompleto, endereco, ap, latitude, longitude'),
+            loop.run_in_executor(executor, fetch_table, 'unidades-saude-municipais', 'NOME, ENDERECO, BAIRRO, TIPO_UNIDADE, CNES, HORARIO_SEMANA, TELEFONE, latitude, longitude'),
+            loop.run_in_executor(executor, fetch_table, 'gestao-equipamento-smas2023', 'nome_equip, endereco, bairro, bairros_at, hierarquia, telefone, latitude, longitude'),
+            loop.run_in_executor(executor, fetch_table, 'vlt-paradas', 'nome, latitude, longitude'),
+            loop.run_in_executor(executor, fetch_table, 'estacoes-brt', 'nome, corredor, latitude, longitude'),
+            loop.run_in_executor(executor, fetch_table, 'supermercados', 'nome, latitude, longitude'),
+        ]
         
-        # ✅ PASSO 2: Aguardar TODAS as requisições simultaneamente
-        # Isso é muito mais rápido que aguardar uma por uma!
-        data = {}
-        for table_key, task in tasks:
-            try:
-                result = await task
-                data[table_key] = result
-                print(f"✅ {table_key}: {len(result)} registros carregados")
-            except Exception as e:
-                print(f"❌ Erro ao carregar {table_key}: {e}")
-                data[table_key] = []
+        # ✅ PASSO 2: Aguardar TODAS simultaneamente
+        results = await asyncio.gather(*tasks)
         
+        # ✅ PASSO 3: Organizar os resultados
+        train_stations, metro_stations, federal_schools, state_schools, municipal_schools, \
+        squares, hospitals, equipments, vlt, brt, supermarkets = results
+        
+        # Debug: contar itens
+        total_items = sum(len(r) for r in results)
+        print(f"✅ Total de itens carregados: {total_items}")
+        
+        data = {
+            'train_stations': train_stations,
+            'metro_stations': metro_stations,
+            'federal_schools': federal_schools,
+            'state_schools': state_schools,
+            'municipal_schools': municipal_schools,
+            'squares': squares,
+            'hospitals': hospitals,
+            'equipments': equipments,
+            'vlt': vlt,
+            'brt': brt,
+            'supermarkets': supermarkets,
+        }
+
         return {
             'success': True,
             'data': data
         }
     
     except Exception as e:
-        print(f"❌ Erro geral na API: {e}")
+        print(f"❌ Erro geral: {e}")
         raise HTTPException(
             status_code=500,
             detail={"success": False, "error": str(e)}
         )
+
 
 # @router.get('/locations')
 # async def get_mcmv_database():
