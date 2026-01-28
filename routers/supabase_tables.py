@@ -19,6 +19,11 @@ def fetch_table(table_name: str, columns: str):
         return []
 
 
+@router.get('/health')
+async def health():
+    return {'status': 'ok'}
+
+
 @router.get('/get-all-data')
 async def get_all_data():
     """

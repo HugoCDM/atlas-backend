@@ -10,9 +10,7 @@ app.add_middleware(
     allow_headers=['*'],
     allow_methods=['*'])
 
-@app.get('/')
-async def health():
-    return {'status': 'ok'}
+
 
 app.include_router(router)
 
