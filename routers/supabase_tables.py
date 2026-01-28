@@ -1,7 +1,48 @@
 from fastapi import APIRouter, status, HTTPException
 from supabase_client import supabase_client
+import asyncio
+from functools import partial
 
 router = APIRouter(prefix='/api', tags=['api'])
+
+
+def fetch_table_sync(table_name, columns):
+    return supabase_client.table(table_name).select(columns).execute()
+
+
+@router.get('/get-all-data')
+async def get_all_data():
+    try:
+        loop = asyncio.get_event_loop()
+    
+        tasks = {
+            'train_stations': loop.run_in_executor(None, partial(fetch_table_sync, 'estacoes-trem', 'nome, rua, presencaRamais, latitude, longitude')),
+            'metro_stations': loop.run_in_executor(None, partial(fetch_table_sync, 'estacoes-metro', 'nome, latitude, longitude')),
+            'federal_schools': loop.run_in_executor(None, partial(fetch_table_sync, 'escolas-federais', 'unidade, endereco, zona, telefone, latitude, longitude')),
+            'state_schools': loop.run_in_executor(None, partial(fetch_table_sync, 'escolas-estaduais', 'unidade, endereco, zona, telefone, latitude, longitude')),
+            'municipal_schools': loop.run_in_executor(None, partial(fetch_table_sync, 'escolas-municipais', 'nome, tipo, latitude, longitude')),
+            'squares': loop.run_in_executor(None, partial(fetch_table_sync, 'pracas', 'nomeCompleto, endereco, ap, latitude, longitude')),
+            'hospitals': loop.run_in_executor(None, partial(fetch_table_sync, 'unidades-saude-municipais', 'NOME, ENDERECO, BAIRRO, TIPO_UNIDADE, CNES, HORARIO_SEMANA, TELEFONE, latitude, longitude')),
+            'equipments': loop.run_in_executor(None, partial(fetch_table_sync, 'gestao-equipamento-smas2023', 'nome_equip, endereco, bairro, bairros_at, hierarquia, telefone, latitude, longitude')),
+            'vlt': loop.run_in_executor(None, partial(fetch_table_sync, 'vlt-paradas', 'nome, latitude, longitude')),
+            'brt': loop.run_in_executor(None, partial(fetch_table_sync, 'estacoes-brt', 'nome, corredor, latitude, longitude')),
+            'supermarkets': loop.run_in_executor(None, partial(fetch_table_sync, 'supermercados', 'nome, latitude, longitude')),
+        }
+
+        results = await asyncio.gather(*tasks.values())
+
+        data = {key: result.data for key, result in zip(tasks.key(), results)}
+
+        return {
+                'success': True,
+                'data': data
+            }
+    
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail={"success": False, "error": str(e)}
+        )
 
 
 # @router.get('/locations')
@@ -185,35 +226,5 @@ router = APIRouter(prefix='/api', tags=['api'])
 #         )
     
 
-@router.get('/get-all-data')
-async def get_all_data():
-    try:
-        def fetch_table(table_name, columns):
-            return supabase_client.table(table_name).select(columns).execute()
-    
-        data = {
-            'train_stations': fetch_table('estacoes-trem', 'nome, rua, presencaRamais, latitude, longitude').data,
-            'metro_stations': fetch_table('estacoes-metro', 'nome, latitude, longitude').data,
-            'federal_schools': fetch_table('escolas-federais', 'unidade, endereco, zona, telefone, latitude, longitude').data,
-            'state_schools': fetch_table('escolas-estaduais', 'unidade, endereco, zona, telefone, latitude, longitude').data,
-            'municipal_schools': fetch_table('escolas-municipais', 'nome, tipo, latitude, longitude').data,
-            'squares': fetch_table('pracas', 'nomeCompleto, endereco, ap, latitude, longitude').data,
-            'hospitals': fetch_table('unidades-saude-municipais', 'NOME, ENDERECO, BAIRRO, TIPO_UNIDADE, CNES, HORARIO_SEMANA, TELEFONE, latitude, longitude').data,
-            'equipments': fetch_table('gestao-equipamento-smas2023', 'nome_equip, endereco, bairro, bairros_at, hierarquia, telefone, latitude, longitude').data,
-            'vlt': fetch_table('vlt-paradas', 'nome, latitude, longitude').data,
-            'brt': fetch_table('estacoes-brt', 'nome, corredor, latitude, longitude').data,
-            'supermarkets': fetch_table('supermercados', 'nome, latitude, longitude').data,
-        }
-
-        return {
-                'success': True,
-                'data': data
-            }
-    
-    except Exception as e:
-        raise HTTPException(
-            status_code=500,
-            detail={"success": False, "error": str(e)}
-        )
 
 
