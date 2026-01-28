@@ -15,23 +15,26 @@ async def get_all_data():
     try:
         loop = asyncio.get_event_loop()
     
-        tasks = {
-            'train_stations': loop.run_in_executor(None, partial(fetch_table_sync, 'estacoes-trem', 'nome, rua, presencaRamais, latitude, longitude')),
-            'metro_stations': loop.run_in_executor(None, partial(fetch_table_sync, 'estacoes-metro', 'nome, latitude, longitude')),
-            'federal_schools': loop.run_in_executor(None, partial(fetch_table_sync, 'escolas-federais', 'unidade, endereco, zona, telefone, latitude, longitude')),
-            'state_schools': loop.run_in_executor(None, partial(fetch_table_sync, 'escolas-estaduais', 'unidade, endereco, zona, telefone, latitude, longitude')),
-            'municipal_schools': loop.run_in_executor(None, partial(fetch_table_sync, 'escolas-municipais', 'nome, tipo, latitude, longitude')),
-            'squares': loop.run_in_executor(None, partial(fetch_table_sync, 'pracas', 'nomeCompleto, endereco, ap, latitude, longitude')),
-            'hospitals': loop.run_in_executor(None, partial(fetch_table_sync, 'unidades-saude-municipais', 'NOME, ENDERECO, BAIRRO, TIPO_UNIDADE, CNES, HORARIO_SEMANA, TELEFONE, latitude, longitude')),
-            'equipments': loop.run_in_executor(None, partial(fetch_table_sync, 'gestao-equipamento-smas2023', 'nome_equip, endereco, bairro, bairros_at, hierarquia, telefone, latitude, longitude')),
-            'vlt': loop.run_in_executor(None, partial(fetch_table_sync, 'vlt-paradas', 'nome, latitude, longitude')),
-            'brt': loop.run_in_executor(None, partial(fetch_table_sync, 'estacoes-brt', 'nome, corredor, latitude, longitude')),
-            'supermarkets': loop.run_in_executor(None, partial(fetch_table_sync, 'supermercados', 'nome, latitude, longitude')),
+        tables = {
+            'train_stations': ('estacoes-trem', 'nome, rua, presencaRamais, latitude, longitude'),
+            'metro_stations': ('estacoes-metro', 'nome, latitude, longitude'),
+            'federal_schools': ('escolas-federais', 'unidade, endereco, zona, telefone, latitude, longitude'),
+            'state_schools': ('escolas-estaduais', 'unidade, endereco, zona, telefone, latitude, longitude'),
+            'municipal_schools': ('escolas-municipais', 'nome, tipo, latitude, longitude'),
+            'squares': ('pracas', 'nomeCompleto, endereco, ap, latitude, longitude'),
+            'hospitals': ('unidades-saude-municipais', 'NOME, ENDERECO, BAIRRO, TIPO_UNIDADE, CNES, HORARIO_SEMANA, TELEFONE, latitude, longitude'),
+            'equipments': ('gestao-equipamento-smas2023', 'nome_equip, endereco, bairro, bairros_at, hierarquia, telefone, latitude, longitude'),
+            'vlt': ('vlt-paradas', 'nome, latitude, longitude'),
+            'brt': ('estacoes-brt', 'nome, corredor, latitude, longitude'),
+            'supermarkets': ('supermercados', 'nome, latitude, longitude'),
         }
+        keys = list(tables.keys())
+        tasks = [
+            loop.run_in_executor(None, fetch_table_sync, tables[key][0], tables[key][1]) for key in keys]
 
         results = await asyncio.gather(*tasks.values())
 
-        data = {key: result.data for key, result in zip(tasks.key(), results)}
+        data = {keys[i]: results[i].data for i in range(len(keys))}
 
         return {
                 'success': True,
