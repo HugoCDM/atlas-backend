@@ -48,7 +48,7 @@ async def get_all_data():
 
         results = await asyncio.gather(*tasks)
         
-        train_stations, metro_stations, federal_schools, state_schools, municipal_schools, squares, hospitals, equipments, vlt, brt, supermarkets, federal_hospitals, state_hospitals = results
+        train_stations, metro_stations, federal_schools, state_schools, municipal_schools, squares, hospitals, equipments, vlt, brt, supermarkets, state_hospitals, federal_hospitals = results
         
         total_items = sum(len(r) for r in results)
         print(f"Total de itens carregados: {total_items}")
