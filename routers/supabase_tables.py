@@ -42,15 +42,16 @@ async def get_all_data():
             loop.run_in_executor(executor, fetch_table, 'vlt-paradas', 'nome, latitude, longitude'),
             loop.run_in_executor(executor, fetch_table, 'estacoes-brt', 'nome, corredor, latitude, longitude'),
             loop.run_in_executor(executor, fetch_table, 'supermercados', 'nome, latitude, longitude'),
+            loop.run_in_executor(executor, fetch_table, 'hospitais-estaduais', 'nome, latitude, longitude'),
+            loop.run_in_executor(executor, fetch_table, 'hospitais-federais', 'nome, latitude, longitude'),
         ]
 
         results = await asyncio.gather(*tasks)
         
-        train_stations, metro_stations, federal_schools, state_schools, municipal_schools, \
-        squares, hospitals, equipments, vlt, brt, supermarkets = results
+        train_stations, metro_stations, federal_schools, state_schools, municipal_schools, squares, hospitals, equipments, vlt, brt, supermarkets, federal_hospitals, state_hospitals = results
         
         total_items = sum(len(r) for r in results)
-        print(f"✅ Total de itens carregados: {total_items}")
+        print(f"Total de itens carregados: {total_items}")
         
         data = {
             'train_stations': train_stations,
@@ -59,11 +60,13 @@ async def get_all_data():
             'state_schools': state_schools,
             'municipal_schools': municipal_schools,
             'squares': squares,
-            'hospitals': hospitals,
+            'municipal_hospitals': hospitals,
             'equipments': equipments,
             'vlt': vlt,
             'brt': brt,
             'supermarkets': supermarkets,
+            'federal_hospitals': federal_hospitals,
+            'state_hospitals': state_hospitals
         }
 
         return {
