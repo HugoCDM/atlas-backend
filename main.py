@@ -11,6 +11,7 @@ app.add_middleware(
         'http://127.0.0.1:5500',
         'http://localhost:3000',
         'https://stately-treacle-e466de.netlify.app',
+        'https://praca11.netlify.app'
     ],
     allow_credentials=True,
     allow_headers=['*'],
